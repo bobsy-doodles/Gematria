@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hebrew Gematria Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .result-card {
+            transition: all 0.3s ease;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .hebrew-key {
+            font-family: 'Frank Ruhl Libre', serif;
+            transition: all 0.2s ease;
+        }
+        
+        .hebrew-key:hover {
+            background-color: #e0e7ff;
+            transform: translateY(-2px);
+        }
+        
+        .hebrew-key:active {
+            background-color: #c7d2fe;
+            transform: translateY(0);
+        }
+        
+        .hebrew-text {
+            direction: rtl;
+            unicode-bidi: bidi-override;
+            font-family: 'Frank Ruhl Libre', serif;
+        }
+        
+        .letter-value {
+            font-family: 'Montserrat', sans-serif;
+            direction: ltr;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-0">
+    <div id="notification" class="notification">
+        <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <span>Only Hebrew characters are allowed</span>
+        </div>
+    </div>
+
+    <div class="container mx-auto max-w-4xl py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-indigo-900 mb-2">Hebrew Gematria Calculator</h1>
+            <p class="text-lg text-gray-600">Discover the numerical values hidden within Hebrew words</p>
+        </header>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            <div class="mb-6">
+                <label for="input-text" class="block text-lg font-medium text-gray-700 mb-2">Enter Hebrew Text</label>
+                <textarea id="input-text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" rows="3" placeholder="Type your text here or use the Hebrew keyboard below..." dir="ltr"></textarea>
+                <p class="mt-2 text-sm text-gray-500">Only Hebrew characters are accepted</p>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-lg font-medium text-gray-700">Hebrew Keyboard</h2>
+                    <button id="toggle-keyboard" class="text-sm text-indigo-600 hover:text-indigo-800">
+                        <span id="keyboard-status">Hide</span> Keyboard
+                    </button>
+                </div>
+                <div id="hebrew-keyboard" class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="grid grid-cols-11 gap-1 mb-1 hebrew-row">
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="א" data-value="1">א</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ב" data-value="2">ב</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ג" data-value="3">ג</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ד" data-value="4">ד</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ה" data-value="5">ה</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ו" data-value="6">ו</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ז" data-value="7">ז</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ח" data-value="8">ח</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ט" data-value="9">ט</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="י" data-value="10">י</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="כ" data-value="20">כ</button>
+                    </div>
+                    <div class="grid grid-cols-11 gap-1 mb-1 hebrew-row">
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ל" data-value="30">ל</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="מ" data-value="40">מ</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="נ" data-value="50">נ</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ס" data-value="60">ס</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ע" data-value="70">ע</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="פ" data-value="80">פ</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="צ" data-value="90">צ</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ק" data-value="100">ק</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ר" data-value="200">ר</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ש" data-value="300">ש</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ת" data-value="400">ת</button>
+                    </div>
+                    <div class="grid grid-cols-5 gap-1 hebrew-row">
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ך" data-value="500">ך</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ם" data-value="600">ם</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ן" data-value="700">ן</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ף" data-value="800">ף</button>
+                        <button class="hebrew-key p-2 bg-white rounded shadow text-xl font-bold" data-char="ץ" data-value="900">ץ</button>
+                    </div>
+                    <div class="mt-2 flex justify-between">
+                        <button id="space-key" class="px-4 py-2 bg-white rounded shadow text-sm font-medium">Space</button>
+                        <button id="backspace-key" class="px-4 py-2 bg-white rounded shadow text-sm font-medium">Backspace</button>
+                        <button id="clear-key" class="px-4 py-2 bg-white rounded shadow text-sm font-medium">Clear All</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="calculate-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-md">
+                Calculate Gematria
+            </button>
+            
+            <div id="results-container" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 text-gray-600">
+        <p>Hebrew Gematria Calculator</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputText = document.getElementById('input-text');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const resultsContainer = document.getElementById('results-container');
+            const hebrewKeys = document.querySelectorAll('.hebrew-key');
+            const spaceKey = document.getElementById('space-key');
+            const backspaceKey = document.getElementById('backspace-key');
+            const clearKey = document.getElementById('clear-key');
+            const toggleKeyboard = document.getElementById('toggle-keyboard');
+            const hebrewKeyboard = document.getElementById('hebrew-keyboard');
+            const keyboardStatus = document.getElementById('keyboard-status');
+            const notification = document.getElementById('notification');
+            
+            // Hebrew letter names for display in English
+            const hebrewLetterNames = {
+                'א': 'Alef', 'ב': 'Bet', 'ג': 'Gimel', 'ד': 'Dalet', 'ה': 'He', 
+                'ו': 'Vav', 'ז': 'Zayin', 'ח': 'Het', 'ט': 'Tet', 'י': 'Yod',
+                'כ': 'Kaf', 'ל': 'Lamed', 'מ': 'Mem', 'נ': 'Nun', 'ס': 'Samekh',
+                'ע': 'Ayin', 'פ': 'Pe', 'צ': 'Tsadi', 'ק': 'Qof', 'ר': 'Resh',
+                'ש': 'Shin', 'ת': 'Tav', 'ך': 'Kaf (final)', 'ם': 'Mem (final)',
+                'ן': 'Nun (final)', 'ף': 'Pe (final)', 'ץ': 'Tsadi (final)'
+            };
+            
+            // Hebrew letter values for gematria calculation
+            const hebrewLetterValues = {
+                'א': 1, 'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6, 'ז': 7, 'ח': 8, 'ט': 9,
+                'י': 10, 'כ': 20, 'ל': 30, 'מ': 40, 'נ': 50, 'ס': 60, 'ע': 70, 'פ': 80, 'צ': 90,
+                'ק': 100, 'ר': 200, 'ש': 300, 'ת': 400, 'ך': 500, 'ם': 600, 'ן': 700, 'ף': 800, 'ץ': 900
+            };
+            
+            // Function to check if a character is Hebrew
+            function isHebrew(char) {
+                return /[\u0590-\u05FF]/.test(char);
+            }
+            
+            // Function to show notification
+            function showNotification() {
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Function to check if text contains Hebrew characters
+            function containsHebrew(text) {
+                for (let i = 0; i < text.length; i++) {
+                    if (isHebrew(text[i])) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            // Filter non-Hebrew input and switch direction when Hebrew is detected
+            inputText.addEventListener('input', function(e) {
+                const input = e.target.value;
+                let filteredInput = '';
+                let containsNonHebrew = false;
+                
+                for (let i = 0; i < input.length; i++) {
+                    const char = input[i];
+                    if (isHebrew(char) || char === ' ' || char === '\n') {
+                        filteredInput += char;
+                    } else {
+                        containsNonHebrew = true;
+                    }
+                }
+                
+                if (containsNonHebrew) {
+                    showNotification();
+                    e.target.value = filteredInput;
+                }
+                
+                // Change direction to RTL if Hebrew characters are detected
+                if (containsHebrew(filteredInput)) {
+                    inputText.setAttribute('dir', 'rtl');
+                    inputText.style.fontFamily = "'Frank Ruhl Libre', serif";
+                } else {
+                    inputText.setAttribute('dir', 'ltr');
+                    inputText.style.fontFamily = "'Montserrat', sans-serif";
+                }
+            });
+            
+            // Hebrew keyboard functionality
+            hebrewKeys.forEach(key => {
+                // Add tooltip with value
+                const hebrewChar = key.getAttribute('data-char');
+                const value = key.getAttribute('data-value');
+                key.setAttribute('title', `${hebrewChar} = ${value}`);
+                
+                // Add click handler
+                key.addEventListener('click', function() {
+                    const char = this.getAttribute('data-char');
+                    insertAtCursor(inputText, char);
+                    
+                    // Ensure RTL direction when adding Hebrew characters
+                    inputText.setAttribute('dir', 'rtl');
+                    inputText.style.fontFamily = "'Frank Ruhl Libre', serif";
+                });
+            });
+            
+            // Space key
+            spaceKey.addEventListener('click', function() {
+                insertAtCursor(inputText, ' ');
+            });
+            
+            // Backspace key
+            backspaceKey.addEventListener('click', function() {
+                const start = inputText.selectionStart;
+                const end = inputText.selectionEnd;
+                
+                if (start === end && start > 0) {
+                    inputText.value = inputText.value.slice(0, start - 1) + inputText.value.slice(end);
+                    inputText.selectionStart = inputText.selectionEnd = start - 1;
+                } else if (start !== end) {
+                    inputText.value = inputText.value.slice(0, start) + inputText.value.slice(end);
+                    inputText.selectionStart = inputText.selectionEnd = start;
+                }
+                
+                inputText.focus();
+                
+                // Check if there are still Hebrew characters after backspace
+                if (!containsHebrew(inputText.value)) {
+                    inputText.setAttribute('dir', 'ltr');
+                    inputText.style.fontFamily = "'Montserrat', sans-serif";
+                }
+            });
+            
+            // Clear key
+            clearKey.addEventListener('click', function() {
+                inputText.value = '';
+                inputText.focus();
+                
+                // Reset to LTR when cleared
+                inputText.setAttribute('dir', 'ltr');
+                inputText.style.fontFamily = "'Montserrat', sans-serif";
+                
+                // Clear results when text is cleared
+                resultsContainer.innerHTML = `
+                    <div class="col-span-full p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-center">
+                        Enter Hebrew text and click "Calculate Gematria" to see results
+                    </div>
+                `;
+            });
+            
+            // Toggle keyboard visibility
+            toggleKeyboard.addEventListener('click', function() {
+                if (hebrewKeyboard.style.display === 'none') {
+                    hebrewKeyboard.style.display = 'block';
+                    keyboardStatus.textContent = 'Hide';
+                } else {
+                    hebrewKeyboard.style.display = 'none';
+                    keyboardStatus.textContent = 'Show';
+                }
+            });
+            
+            // Helper function to insert text at cursor position
+            function insertAtCursor(field, text) {
+                const start = field.selectionStart;
+                const end = field.selectionEnd;
+                
+                field.value = field.value.slice(0, start) + text + field.value.slice(end);
+                field.selectionStart = field.selectionEnd = start + text.length;
+                field.focus();
+            }
+            
+            // Calculate button click handler
+            calculateBtn.addEventListener('click', calculateGematria);
+            
+            // Calculate gematria values
+            function calculateGematria() {
+                const text = inputText.value.trim();
+                
+                if (!text) {
+                    resultsContainer.innerHTML = `
+                        <div class="col-span-full p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700">
+                            Please enter some Hebrew text to calculate its gematria value.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const words = text.split(/\s+/);
+                
+                let results = [];
+                let totalValue = 0;
+                
+                // Calculate for each word
+                words.forEach(word => {
+                    let wordValue = 0;
+                    let letterBreakdown = [];
+                    
+                    for (let i = 0; i < word.length; i++) {
+                        const letter = word[i];
+                        if (hebrewLetterValues[letter]) {
+                            wordValue += hebrewLetterValues[letter];
+                            
+                            // Create English breakdown for Hebrew letters
+                            const letterName = hebrewLetterNames[letter] || letter;
+                            letterBreakdown.push({
+                                letter: letter,
+                                name: letterName,
+                                value: hebrewLetterValues[letter]
+                            });
+                        }
+                    }
+                    
+                    if (wordValue > 0) {
+                        results.push({
+                            word: word,
+                            value: wordValue,
+                            breakdown: letterBreakdown
+                        });
+                        
+                        totalValue += wordValue;
+                    }
+                });
+                
+                displayResults(results, totalValue);
+            }
+            
+            // Display the results
+            function displayResults(results, totalValue) {
+                resultsContainer.innerHTML = '';
+                
+                // Add total value card
+                const totalCard = document.createElement('div');
+                totalCard.className = 'col-span-full result-card bg-indigo-100 p-5 rounded-xl shadow-md mb-4';
+                totalCard.innerHTML = `
+                    <h3 class="text-xl font-bold text-indigo-900 mb-2">Total Gematria Value</h3>
+                    <div class="flex items-center justify-center">
+                        <span class="text-4xl font-bold text-indigo-600">${totalValue}</span>
+                    </div>
+                `;
+                resultsContainer.appendChild(totalCard);
+                
+                // Add individual word cards
+                results.forEach(result => {
+                    const wordCard = document.createElement('div');
+                    wordCard.className = 'result-card bg-white p-4 rounded-lg border border-gray-200 shadow-sm';
+                    
+                    let breakdownHTML = '';
+                    result.breakdown.forEach(item => {
+                        breakdownHTML += `
+                            <div class="inline-block mr-2 mb-2 px-3 py-2 bg-gray-100 rounded text-sm">
+                                <span class="hebrew-text text-lg font-bold">${item.letter}</span>
+                                <span class="letter-value block text-xs text-gray-600">${item.name} = ${item.value}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    wordCard.innerHTML = `
+                        <h3 class="font-bold text-lg text-gray-800 mb-2 hebrew-text">"${result.word}"</h3>
+                        <div class="mb-3">
+                            <span class="text-2xl font-bold text-indigo-600">${result.value}</span>
+                        </div>
+                        <div class="flex flex-wrap">
+                            ${breakdownHTML}
+                        </div>
+                    `;
+                    
+                    resultsContainer.appendChild(wordCard);
+                });
+            }
+            
+            // Arrange Hebrew keyboard keys in reverse order (right-to-left)
+            const hebrewRows = document.querySelectorAll('.hebrew-row');
+            hebrewRows.forEach(row => {
+                const keys = Array.from(row.children);
+                row.innerHTML = '';
+                keys.reverse().forEach(key => {
+                    row.appendChild(key);
+                });
+            });
+            
+            // Initialize with empty text and placeholder message
+            resultsContainer.innerHTML = `
+                <div class="col-span-full p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-center">
+                    Enter Hebrew text and click "Calculate Gematria" to see results
+                </div>
+            `;
+            
+            // Focus on the input field when the page loads
+            inputText.focus();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94f3cd04c7cca261',t:'MTc0OTg0MDkxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
